@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width" />
+
+        <style>
+            body {
+                font-family: Tahoma, Geneva, sans-serif;
+                text-align: center;
+            }
+        </style>
+
+        <!-- colyseus.js client (npm run bundle-colyseus-client) -->
+        <script type="text/javascript" src="colyseus.js"></script>
+    </head>
+    <body>
+        <h1>Drink or piss</h1>
+
+        <strong>commands</strong><br />
+
+        <button onclick="drink()">Drink</button>
+        <button onclick="piss()">Piss</button>
+
+        <div id="game"></div>
+
+        <script>
+            var client = new Colyseus.Client("ws://localhost:4321");
+            var room = client.join("drink_or_piss");
+
+            room.onJoin.add(function() {
+                console.log(`Room joined`);
+            });
+
+            room.onStateChange.add(function(state) {
+                var gameDiv = document.querySelector("#game");
+
+                // Clean board
+                var child = gameDiv.lastElementChild;
+                while (child) {
+                    gameDiv.removeChild(child);
+                    child = gameDiv.lastElementChild;
+                }
+
+                console.log("the room state has been updated:", state);
+                for (var drinker in state.drinkers) {
+                    var drinkCount = state.drinkers[drinker]._drinkCount;
+                    var node = document.createElement("div");
+                    var textnode = document.createTextNode(
+                        `${drinker} - ${drinkCount}`
+                    );
+                    node.appendChild(textnode);
+                    gameDiv.appendChild(node);
+                }
+            });
+            function drink() {
+                room.send({ action: "D" });
+            }
+
+            function piss() {
+                room.send({ action: "P" });
+            }
+        </script>
+    </body>
+</html>
