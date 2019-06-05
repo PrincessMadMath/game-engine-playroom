@@ -10,7 +10,7 @@ client.onOpen.add(() => {
     room.onStateChange.add(function(state) {
         console.log("the room state has been updated:", state);
         for (var drinker in state.drinkers) {
-            var drinkCount = state.drinkers[drinker]._drinkCount;
+            var drinkCount = state.drinkers[drinker]._points;
         }
 
         room.send({ action: "D" });

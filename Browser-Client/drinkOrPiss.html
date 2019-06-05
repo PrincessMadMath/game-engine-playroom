@@ -43,10 +43,10 @@
 
                 console.log("the room state has been updated:", state);
                 for (var drinker in state.drinkers) {
-                    var drinkCount = state.drinkers[drinker]._drinkCount;
+                    var points = state.drinkers[drinker]._points;
                     var node = document.createElement("div");
                     var textnode = document.createTextNode(
-                        `${drinker} - ${drinkCount}`
+                        `${drinker} - ${points}`
                     );
                     node.appendChild(textnode);
                     gameDiv.appendChild(node);
