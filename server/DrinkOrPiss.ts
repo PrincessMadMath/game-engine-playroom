@@ -8,6 +8,11 @@ const drinkerState = {
     puking: "puking"
 };
 
+const riskFactor = 0.05;
+const pointsPerDrink = 10;
+const pointsLostPerPiss = 10;
+const drunknessLostPerPiss = 3;
+
 export class Drinker extends Schema {
     @type("number")
     drinkCount = 0;
@@ -33,14 +38,31 @@ export class DrinkingGameState extends Schema {
 
     drink(id: string) {
         this.drinkers[id].drunkness += 1;
-        this.drinkers[id].points += 1;
+
+        if (this.IsPuking(this.drinkers[id].drunkness)){
+            this.drinkers[id].drinkerState = drinkerState.puking
+            this.drinkers[id].points -= 100;
+            this.drinkers[id].drunkness = 0;
+            return;
+        }
+
+        this.drinkers[id].points += pointsPerDrink * this.drunknessBonusFactor(this.drinkers[id].drunkness);
         this.drinkers[id].action += drinkerState.drinking;
     }
 
     piss(id: string) {
-        this.drinkers[id].drunkness = 0;
-        this.drinkers[id].points -= 100;
+        this.drinkers[id].drunkness -= this.drinkers[id].drunkness >= drunknessLostPerPiss ?
+        drunknessLostPerPiss : this.drinkers[id].drunkness;
+        this.drinkers[id].points -= pointsLostPerPiss;
         this.drinkers[id].action += drinkerState.pissing;
+    }
+
+    drunknessBonusFactor(drunkness: number) {
+        return (1 + drunkness / 10);
+    }
+
+    IsPuking(drunkness: number) {
+        return Math.random() < (drunkness * riskFactor);
     }
 }
 
