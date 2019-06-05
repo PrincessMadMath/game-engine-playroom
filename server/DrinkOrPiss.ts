@@ -70,6 +70,7 @@ export class DrinkingGameRoom extends Room<DrinkingGameState> {
     onInit(options: any) {
         console.log("DrinkingGameRoom created!", options);
 
+        this.setPatchRate(1000);
         this.setState(new DrinkingGameState());
     }
 
