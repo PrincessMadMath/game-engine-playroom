@@ -1,5 +1,5 @@
-const Game = require("./game.js");
+const { Player } = require("./sdk");
 
-Game.loop = function () {
-    Game.drink();
-};
+module.exports.loop = function () {
+    Player.drink();
+}
