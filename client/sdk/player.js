@@ -1,12 +1,12 @@
-const Game = require("./game");
+const Client = require("./client");
 
 class Player {
     drink() {
-        Game.room.send({ action: "D" });
+        Client.room.send({ action: "D" });
     }
 
     piss() {
-        Game.room.send({ action: "P" });
+        Client.room.send({ action: "P" });
     }
 }
 
