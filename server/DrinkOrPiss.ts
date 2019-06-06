@@ -24,6 +24,10 @@ export class Drinker extends Schema {
     action = drinkerState.standing;
 }
 
+interface ClientAction {
+  action: "D" | "P";
+}
+
 export class DrinkingGameState extends Schema {
     @type({ map: Drinker })
     drinkers = new MapSchema<Drinker>();
@@ -39,7 +43,7 @@ export class DrinkingGameState extends Schema {
     drink(id: string) {
         this.drinkers[id].drunkness += 1;
 
-        if (this.IsPuking(this.drinkers[id].drunkness)){
+        if (this.isPuking(this.drinkers[id].drunkness)){
             this.drinkers[id].drinkerState = drinkerState.puking
             this.drinkers[id].points -= 100;
             this.drinkers[id].drunkness = 0;
@@ -61,17 +65,21 @@ export class DrinkingGameState extends Schema {
         return (1 + drunkness / 10);
     }
 
-    IsPuking(drunkness: number) {
+    isPuking(drunkness: number) {
         return Math.random() < (drunkness * riskFactor);
     }
 }
 
 export class DrinkingGameRoom extends Room<DrinkingGameState> {
+    private queuedActions: { [sessionId: string]: "P" | "D" } = {};
+
     onInit(options: any) {
         console.log("DrinkingGameRoom created!", options);
 
+        this.queuedActions = {};
         this.setPatchRate(1000);
         this.setState(new DrinkingGameState());
+        this.setSimulationInterval((deltaTime) => this.update(deltaTime));
     }
 
     onJoin(client: Client, options: any) {
@@ -82,20 +90,28 @@ export class DrinkingGameRoom extends Room<DrinkingGameState> {
         this.state.removeDrinker(client.sessionId);
     }
 
-    onMessage(client: Client, message: any) {
-        console.log(
-            "DrinkingGameRoom received message from",
-            client.sessionId,
-            ":",
-            message
-        );
+    onMessage(client: Client, message: ClientAction) {
+        console.log(`DrinkingGameRoom received message from + ${client.sessionId} : ${message}`);
 
-        if (message.action == "D") {
-            this.state.drink(client.sessionId);
-        } else {
-            this.state.piss(client.sessionId);
+        if (message && message.action) {
+           this.queuedActions[client.sessionId] = message.action;
         }
     }
+
+    update(deltaTime: number) {
+      for (const sessionId in this.queuedActions) {
+        const action = this.queuedActions[sessionId];
+
+        if (action === "D") {
+          this.state.drink(sessionId);
+        } else if (action === "P") {
+          this.state.piss(sessionId);
+        }
+      }
+
+      this.queuedActions = {};
+    }
+
     onDispose() {
         console.log("Dispose DrinkingGameRoom!");
     }
