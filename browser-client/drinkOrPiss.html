@@ -11,54 +11,94 @@
         </style>
 
         <!-- colyseus.js client (npm run bundle-colyseus-client) -->
-        <script type="text/javascript" src="colyseus.js"></script>
     </head>
     <body>
         <h1>Drink or piss</h1>
+        <p>Press P to Piss and D to Drink</p>
 
-        <strong>commands</strong><br />
-
-        <button onclick="drink()">Drink</button>
-        <button onclick="piss()">Piss</button>
-
-        <div id="game"></div>
-
+        <script type="text/javascript" src="colyseus.js"></script>
+        <script src="phaser.min.js"></script>
         <script>
-            var client = new Colyseus.Client("ws://localhost:4321");
-            var room = client.join("drink_or_piss");
+                var config = {
+                    type: Phaser.AUTO,
+                    width: 800,
+                    height: 600,
+                    physics: {
+                        default: 'arcade',
+                        arcade: {
+                            gravity: { y: 200 }
+                        }
+                    },
+                    scene: {
+                        preload: preload,
+                        create: create,
+                        update: update,
+                    }
+                };
+            
+                var game = new Phaser.Game(config);
+                var drinkCountText;
+            
+                function preload ()
+                {
+                    this.client = new Colyseus.Client("ws://localhost:4321");
+                    this.room = this.client.join("drink_or_piss");
+                    this.sessionId = 0;
 
-            room.onJoin.add(function() {
-                console.log(`Room joined`);
-            });
+                    this.room.onJoin.add(function() {
+                        console.log(`Room joined`);
+                    });
 
-            room.onStateChange.add(function(state) {
-                var gameDiv = document.querySelector("#game");
+                    this.load.setBaseURL('http://labs.phaser.io');
+            
+                    this.load.image('sky', 'assets/skies/space3.png');
+                    this.load.image('logo', 'assets/sprites/phaser3-logo.png');
+                    this.load.image('red', 'assets/particles/red.png');
+                }
+            
+                function create ()
+                {
+                    this.pissKey =  this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.P);
+                    this.drinkKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D);
 
-                // Clean board
-                var child = gameDiv.lastElementChild;
-                while (child) {
-                    gameDiv.removeChild(child);
-                    child = gameDiv.lastElementChild;
+                    this.add.image(400, 300, 'sky');
+
+                    console.log(this.scale.height);
+
+                    drinkCountText =  this.add.text(0,this.scale.height - 200, "", {
+                        font: "32px Arial",
+                        fill: "#ff0044",
+                        align: "center"
+                    });
+
+                    this.room.onStateChange.add(function(state) {
+                        console.log("the room state has been updated:", state);
+                        var text = '';
+                        for (var drinker in state.drinkers) {
+                            var drinkCount = state.drinkers[drinker]._drinkCount;
+                            console.log(`${drinker} - ${drinkCount}`);
+                            text += `${drinker}: ${drinkCount}\n`;
+                        }
+                        updateDrinkCount(text);
+                    });
                 }
 
-                console.log("the room state has been updated:", state);
-                for (var drinker in state.drinkers) {
-                    var points = state.drinkers[drinker]._points;
-                    var node = document.createElement("div");
-                    var textnode = document.createTextNode(
-                        `${drinker} - ${points}`
-                    );
-                    node.appendChild(textnode);
-                    gameDiv.appendChild(node);
+                function updateDrinkCount(text) {
+                    drinkCountText.setText(text);
                 }
-            });
-            function drink() {
-                room.send({ action: "D" });
-            }
 
-            function piss() {
-                room.send({ action: "P" });
-            }
-        </script>
+                function update() {
+                    
+
+                    if(Phaser.Input.Keyboard.JustDown(this.pissKey)) {
+                        console.log(`${this.room.sessionId} Piss`);
+                        this.room.send({ action: "P" });
+                    }
+                    if(Phaser.Input.Keyboard.JustDown(this.drinkKey)) {
+                        console.log(`${this.room.sessionId} Drink`);
+                        this.room.send({ action: "D" });
+                    }
+                }
+                </script>
     </body>
 </html>
