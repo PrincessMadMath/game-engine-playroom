@@ -1,5 +1,5 @@
-var game = require("./game.js");
+var Game = require("./game.js");
 
-game.loop = function () {
-    game.drink();
+Game.loop = function () {
+    Game.drink();
 }
