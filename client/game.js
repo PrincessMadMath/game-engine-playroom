@@ -20,9 +20,19 @@ class Game {
         this._room.onStateChange.add((state)=>this._stateChanged(state));
     }
 
-    _stateChanged(state) {
-        this.state = state;
-        this.loop();
+    _stateChanged(gameState) {
+        console.log(JSON.stringify(gameState));
+        if (gameState && gameState.drinkers) {
+            const playerId = this._room.sessionId;
+            const playerState = gameState.drinkers[playerId];
+
+            if (playerState) {
+                playerState.time = gameState.time;
+
+                this.state = playerState;
+                this.loop();
+            }
+        }
     }
 
     _roomJoined(error) {
@@ -45,6 +55,6 @@ class Game {
 
 }
 
-const game = new Game()
-game._init()
-module.exports = game
+const game = new Game();
+game._init();
+module.exports = game;

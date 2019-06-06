@@ -8,6 +8,10 @@ const drinkerState = {
     puking: "puking"
 };
 
+interface ClientAction {
+  action: "D" | "P";
+}
+
 const riskFactor = 0.05;
 const pointsPerDrink = 10;
 const pointsLostPerPiss = 10;
@@ -16,21 +20,23 @@ const drunknessLostPerPiss = 3;
 export class Drinker extends Schema {
     @type("number")
     drinkCount = 0;
+
     @type("number")
     drunkness = 0;
+
     @type("number")
     points = 0;
+
     @type("string")
     action = drinkerState.standing;
-}
-
-interface ClientAction {
-  action: "D" | "P";
 }
 
 export class DrinkingGameState extends Schema {
     @type({ map: Drinker })
     drinkers = new MapSchema<Drinker>();
+
+    @type("number")
+    time = 0;
 
     createDrinker(id: string) {
         this.drinkers[id] = new Drinker();
@@ -72,14 +78,18 @@ export class DrinkingGameState extends Schema {
 
 export class DrinkingGameRoom extends Room<DrinkingGameState> {
     private queuedActions: { [sessionId: string]: "P" | "D" } = {};
+    private time: number = 0;
 
     onInit(options: any) {
         console.log("DrinkingGameRoom created!", options);
 
         this.queuedActions = {};
+        this.time = 0;
+        this.autoDispose = false;
+
         this.setPatchRate(1000);
         this.setState(new DrinkingGameState());
-        this.setSimulationInterval((deltaTime) => this.update(deltaTime));
+        this.setSimulationInterval((deltaTime) => this.update(deltaTime), 1000);
     }
 
     onJoin(client: Client, options: any) {
@@ -109,6 +119,9 @@ export class DrinkingGameRoom extends Room<DrinkingGameState> {
         }
       }
 
+      console.log(JSON.stringify(this.state));
+
+      this.state.time++;
       this.queuedActions = {};
     }
 
